@@ -1,51 +1,115 @@
 package com.example.Auth.global.config.security.jwt;
 
+import com.example.Auth.domain.user.domain.RoleType;
+import com.example.Auth.domain.user.domain.User;
+import com.example.Auth.domain.user.dto.UserDto;
+import jakarta.servlet.FilterChain;
+import org.aspectj.lang.annotation.Before;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 class JwtAuthorizationFilterTest {
     private MockMvc mockMvc;
 
-    @Autowired
-    private WebApplicationContext context;
+    @InjectMocks
+    private JwtAuthorizationFilter jwtAuthorizationFilter;
 
-    @BeforeEach
-    void setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
+    @Mock
+    private FilterChain filterChain;
+
+    @Before("setup")
+    public void setup() {
+        mockMvc = MockMvcBuilders.standaloneSetup().build();
     }
 
     @Test
     public void testValidToken() throws Exception {
+        User user = User.builder()
+                .id(1L)
+                .name("John Doe")
+                .email("a@a.com")
+                .role(RoleType.USER)
+                .build();
+        UserDto userDto = new UserDto(user);
+        String token = TokenUtils.generateJwtToken(userDto);
 
+        MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
+                .get("/api/v1/users/login")
+                .header(AuthConstants.AUTH_HEADER.getValue(), AuthConstants.TOKEN_TYPE + token);
+
+        mockMvc.perform(requestBuilder)
+                .andExpect(status().isOk())
+                .andExpect(content().string("Protected Resource"))
+                .andDo(print());
     }
 
-//    @Test
-//    public void testInvalidToken() throws Exception {
-//        String invalidToken = "invalid_token";
-//
-//        mockMvc.perform(get("/api/v1/test/protected")
-//                .header(AuthConstants.AUTH_HEADER, AuthConstants.TOKEN_TYPE + " " + invalidToken))
-//                .andExpect(status().isUnauthorized())
-//                .andDo(print());
-//    }
-//
-//    @Test
-//    public void testNoToken() throws Exception {
-//        mockMvc.perform(get("/api/v1/test/protected"))
-//                .andExpect(status().isUnauthorized())
-//                .andDo(print());
-//
-//    }
+    @Test
+    public void testInvalidToken() throws Exception {
+        String invalidToken = "invalid_token";
+
+        MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
+                .get("/api/v1/users/login")
+                .header(AuthConstants.AUTH_HEADER.getValue(), AuthConstants.TOKEN_TYPE + invalidToken);
+
+        mockMvc.perform(requestBuilder)
+                .andExpect(status().isUnauthorized())
+                .andDo(print());
+    }
+
+    @Test
+    public void testNoToken() throws Exception {
+        MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
+                .get("/api/v1/users/login");
+
+        mockMvc.perform(requestBuilder)
+                .andExpect(status().isUnauthorized())
+                .andDo(print());
+    }
+
+    @Test
+    public void testOptionRequest() throws Exception {
+        // OPTIONS 메서드 요청
+        MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
+                .options("/api/v1/users/login");
+
+        mockMvc.perform(requestBuilder)
+                .andExpect(status().isOk())
+                .andExpect(content().string("Option Request"))
+                .andDo(print());
+    }
+
+    @Test
+    public void testTokenValidationException() throws Exception {
+        String invalidToken = "invalid_token";
+
+        MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
+                .get("/api/v1/users/login")
+                .header(AuthConstants.AUTH_HEADER.getValue(), AuthConstants.TOKEN_TYPE + invalidToken);
+
+//        Mockito.doThrow(new RuntimeException("Invalid Token")).when(jwtAuthorizationFilter).isJwtValid(invalidToken);
+
+        mockMvc.perform(requestBuilder)
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().string(containsString("Token is invalid")))
+                .andDo(print());
+    }
 }
