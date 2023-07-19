@@ -14,13 +14,15 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 @ConditionalOnDefaultWebSecurity
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
-public class SecurityConfig {
+public class WebSecurityConfig {
     private final String[] webSecurityIgnoring = {
             "/",
             "/favicon.ico",
             "/api-docs/**",
             "/test/**"
     };
+
+
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
