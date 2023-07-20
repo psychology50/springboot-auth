@@ -20,6 +20,9 @@ public class User extends Auditable{
     @Column(name = "name", nullable = false)
     private String name;
 
+    @Column(name = "password", nullable = false)
+    private String password; // 임시 추가
+
     @Column(name = "bio")
     private String bio;
 

@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserDto {
     private Long id;
+    private String password;
     private String name;
     private String email;
     @JsonDeserialize(using = RoleTypeDeserializer.class)
@@ -19,6 +20,7 @@ public class UserDto {
 
     public UserDto(User user) {
         this.id = user.getId();
+        this.password = user.getPassword();
         this.name = user.getName();
         this.email = user.getEmail();
         this.role = user.getRole();
