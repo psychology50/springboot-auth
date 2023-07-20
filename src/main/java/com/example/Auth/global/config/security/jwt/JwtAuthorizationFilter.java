@@ -31,6 +31,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         );
 
         if (isIgnoreUrlOrOptionRequest(jwtIgnoreUrls, request.getRequestURI(), request)) {
+            log.info("isIgnoreUrlOrOptionRequest: {}", request.getRequestURI());
             filterChain.doFilter(request, response);
             return;
         }
@@ -56,14 +57,13 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             throw new RuntimeException("JWT Token is missing");
 
         String token = TokenUtils.getTokenFromHeader(header);
-
         if (!TokenUtils.isValidToken(token))
             throw new RuntimeException("JWT Token is invalid");
 
         String userId = TokenUtils.getUserIdFromToken(token);
         log.info("[+] userId: {}", userId);
 
-        if (userId == null || userId.equalsIgnoreCase(""))
+        if (userId == null || userId.isBlank())
             throw new RuntimeException("Token is not userId");
     }
 

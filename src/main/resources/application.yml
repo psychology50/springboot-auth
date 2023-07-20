@@ -10,8 +10,16 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  main:
+    allow-bean-definition-overriding: true
+
+
 
 logging:
   level:
     org.hibernate.sql: debug
     org.hibernate.type: trace
+
+jwt:
+  header: Authorization
+  token-validity-in-seconds: 604800

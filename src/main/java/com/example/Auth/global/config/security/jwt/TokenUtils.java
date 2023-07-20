@@ -16,7 +16,7 @@ import java.util.Map;
 @Log4j2
 public class TokenUtils {
     // TODO : @Value로 jwtSecretKey를 가져오는 방법을 찾아보자.
-    private static final String jwtSecretKey = "exampleSecretKey";
+    private static final String jwtSecretKey = "exampleSecretKeyForSpringBootProjectAtSubRepository";
 
     /**
      * Header 내의 토큰을 추출하는 메서드

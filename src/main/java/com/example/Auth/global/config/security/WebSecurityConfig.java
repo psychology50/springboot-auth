@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -19,12 +20,12 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 @ConditionalOnDefaultWebSecurity
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class WebSecurityConfig {
-
     private final String[] webSecurityIgnoring = {
             "/",
             "/favicon.ico",
             "/api-docs/**",
-            "/test/**"
+            "/test/**",
+            "/api/v1/users/login"
     };
 
     @Bean
@@ -33,7 +34,7 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public JwtAuthorizationFilter jwtAuthorizationFilter() throws Exception {
+    public JwtAuthorizationFilter jwtAuthorizationFilter() {
         return new JwtAuthorizationFilter();
     }
 
@@ -53,6 +54,8 @@ public class WebSecurityConfig {
                         }
                 )
                 .addFilterBefore(jwtAuthorizationFilter(), BasicAuthenticationFilter.class)
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
                 .formLogin().disable()
                 .exceptionHandling();
         return httpSecurity.build();
