@@ -1,8 +1,12 @@
 package com.example.Auth.global.config.security.jwt;
 
+import com.example.Auth.domain.user.dto.UserAuthenticateDto;
 import com.example.Auth.domain.user.dto.UserDto;
 import io.jsonwebtoken.*;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -11,12 +15,27 @@ import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Log4j2
 public class JwtTokenProvider {
-    // TODO : @Value로 jwtSecretKey를 가져오는 방법을 찾아보자.
-    private static final String jwtSecretKey = "exampleSecretKeyForSpringBootProjectAtSubRepository";
+    private static String jwtSecretKey;
+    private static int accessTokenExpirationTime;
+    private static int refreshTokenExpirationTime;
+    private static RedisTemplate<String, String> redisTemplate;
+
+    public JwtTokenProvider(
+            @Value("${jwt.secret}") String jwtSecretKey,
+            @Value("${jwt.token.access-expiration-time}") int accessTokenExpirationTime,
+            @Value("${jwt.token.refresh-expiration-time}") int refreshTokenExpirationTime,
+            RedisTemplate<String, String> redisTemplate
+    ) {
+        this.jwtSecretKey = jwtSecretKey;
+        this.accessTokenExpirationTime = accessTokenExpirationTime;
+        this.refreshTokenExpirationTime = refreshTokenExpirationTime;
+        this.redisTemplate = redisTemplate;
+    }
 
     /**
      * 헤더로부터 토큰을 추출하는 메서드
@@ -30,14 +49,11 @@ public class JwtTokenProvider {
         if (!isValidToken(token))
             throw new RuntimeException("JWT Token is invalid");
 
-        String userId = getUserIdFromToken(token);
-        log.info("userId: {}", userId);
-
-        if (userId == null || userId.isBlank())
+        Long userId = getUserIdFromToken(token);
+        if (userId == null)
             throw new RuntimeException("userId is null or blank");
     }
-
-
+    
 //    public Authentication getAuthentication(String token) {
 //        Claims claims = getClaimsFormToken(token);
 //        String userName = claims.getSubject();
@@ -51,13 +67,12 @@ public class JwtTokenProvider {
      * @param dto UserDto : 사용자 정보
      * @return String : 토큰
      */
-    public static String generateAccessToken(UserDto dto) {
+    public static String generateAccessToken(UserAuthenticateDto dto) {
         return Jwts.builder()
                 .setHeader(createHeader())
                 .setClaims(createClaims(dto))
-                .setSubject(String.valueOf(dto.getId()))
                 .signWith(SignatureAlgorithm.HS256, createSignature())
-                .setExpiration(createExpireDate(1))
+                .setExpiration(createExpireDate(accessTokenExpirationTime))
                 .compact();
     }
 
@@ -66,13 +81,21 @@ public class JwtTokenProvider {
      * @param dto UserDto : 사용자 정보
      * @return String : 토큰
      */
-    public static String generateRefreshToken(UserDto dto) {
-        return Jwts.builder()
+    public static String generateRefreshToken(UserAuthenticateDto dto) {
+        String token = Jwts.builder()
                 .setHeader(createHeader())
-                .setSubject(String.valueOf(dto.getName()))
+                .setClaims(createClaims(dto))
                 .signWith(SignatureAlgorithm.HS256, createSignature())
-                .setExpiration(createExpireDate(24 * 3))
+                .setExpiration(createExpireDate(refreshTokenExpirationTime))
                 .compact();
+
+        redisTemplate.opsForValue().set(
+                dto.getId().toString(),
+                token,
+                refreshTokenExpirationTime,
+                TimeUnit.HOURS
+        );
+        return token;
     }
 
     private static boolean isValidToken(String token) {
@@ -80,7 +103,7 @@ public class JwtTokenProvider {
             Claims claims = getClaimsFormToken(token);
 
             log.info("expireTime: {}", claims.getExpiration());
-            log.info("userId: {}", claims.get("userId", String.class));
+            log.info("userId: {}", claims.get("userId", Long.class));
             log.info("userName: {}", claims.get("userName", String.class));
 
             return true;
@@ -88,6 +111,7 @@ public class JwtTokenProvider {
             log.error("Token Expired");
             return false;
         } catch (JwtException e) {
+            log.error("error message: {}", e.getMessage());
             log.error("Token Tampered");
             return false;
         } catch (NullPointerException e) {
@@ -102,10 +126,9 @@ public class JwtTokenProvider {
                       "regDate", System.currentTimeMillis());
     }
 
-    private static Map<String, Object> createClaims(UserDto dto) {
-        return Map.of("userId", dto.getId(),
-                      "userEmail", dto.getEmail(),
-                      "userRole", dto.getRole());
+    private static Map<String, Object> createClaims(UserAuthenticateDto dto) {
+        return Map.of("userId", dto.getId()
+                     ,"userName", dto.getName());
     }
 
     private static Key createSignature() {
@@ -113,9 +136,9 @@ public class JwtTokenProvider {
         return new SecretKeySpec(secretKeyBytes, SignatureAlgorithm.HS256.getJcaName());
     }
 
-    private static Date createExpireDate(int time) {
+    private static Date createExpireDate(int expirationTime) {
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.HOUR, time);
+        calendar.add(Calendar.HOUR, expirationTime);
         return calendar.getTime();
     }
 
@@ -123,9 +146,9 @@ public class JwtTokenProvider {
         return header.split(" ")[1];
     }
 
-    private static String getUserIdFromToken(String token) {
+    private static Long getUserIdFromToken(String token) {
         Claims claims = getClaimsFormToken(token);
-        return claims.get("userId", String.class);
+        return claims.get("userId", Long.class);
     }
 
     private static Claims getClaimsFormToken(String token) {

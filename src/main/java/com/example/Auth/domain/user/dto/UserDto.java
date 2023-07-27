@@ -4,6 +4,7 @@ import com.example.Auth.domain.user.domain.RoleType;
 import com.example.Auth.domain.user.domain.RoleTypeDeserializer;
 import com.example.Auth.domain.user.domain.User;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import jakarta.persistence.Column;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,17 +13,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserDto {
     private Long id;
-    private String password;
     private String name;
     private String email;
+    private Integer githubId;
     @JsonDeserialize(using = RoleTypeDeserializer.class)
     private RoleType role;
 
     public UserDto(User user) {
         this.id = user.getId();
-        this.password = user.getPassword();
         this.name = user.getName();
         this.email = user.getEmail();
+        this.githubId = user.getGithubId();
         this.role = user.getRole();
     }
 
@@ -31,6 +32,7 @@ public class UserDto {
                 .id(id)
                 .name(name)
                 .email(email)
+                .githubId(githubId)
                 .role(role)
                 .build();
     }

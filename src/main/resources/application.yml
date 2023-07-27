@@ -4,6 +4,7 @@ spring:
     username: ${DB_USER_NAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
     database: MySQL
     database-platform: org.hibernate.dialect.MySQLDialect
@@ -13,10 +14,17 @@ spring:
 
   main:
     allow-bean-definition-overriding: true
-
-
+  data.redis:
+    host: localhost
+    port: 6379
 
 logging:
   level:
     org.hibernate.sql: debug
     org.hibernate.type: trace
+
+jwt:
+  secret: exampleSecretKeyForSpringBootProjectAtSubRepository
+  token:
+    access-expiration-time: 7
+    refresh-expiration-time: 168

@@ -2,6 +2,7 @@ package com.example.Auth.global.config.security.jwt;
 
 import com.example.Auth.domain.user.domain.RoleType;
 import com.example.Auth.domain.user.domain.User;
+import com.example.Auth.domain.user.dto.UserAuthenticateDto;
 import com.example.Auth.domain.user.dto.UserDto;
 import jakarta.servlet.FilterChain;
 import org.aspectj.lang.annotation.Before;
@@ -43,7 +44,7 @@ class JwtAuthorizationFilterTest {
                 .email("a@a.com")
                 .role(RoleType.USER)
                 .build();
-        UserDto userDto = new UserDto(user);
+        UserAuthenticateDto userDto = UserAuthenticateDto.of(user.getId(), user.getName());
         String token = JwtTokenProvider.generateAccessToken(userDto);
 
         MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
