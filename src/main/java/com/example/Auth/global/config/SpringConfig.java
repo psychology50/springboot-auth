@@ -1,4 +1,4 @@
-package com.example.Auth.global.config.properties;
+package com.example.Auth.global.config;
 
 import com.example.Auth.domain.user.application.UserAuthService;
 import com.example.Auth.domain.user.application.UserSearchService;

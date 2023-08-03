@@ -36,4 +36,16 @@ public class UserDto {
                 .role(role)
                 .build();
     }
+
+    @Override public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("UserDto(");
+        sb.append("id=").append(id);
+        sb.append(", name=").append(name);
+        sb.append(", email=").append(email);
+        sb.append(", githubId=").append(githubId);
+        sb.append(", role=").append(role);
+        sb.append(")");
+        return sb.toString();
+    }
 }

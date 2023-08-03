@@ -1,53 +1,71 @@
 package com.example.Auth.global.config.security.jwt;
 
 import com.example.Auth.domain.user.dto.UserAuthenticateDto;
-import com.example.Auth.domain.user.dto.UserDto;
-import io.jsonwebtoken.*;
-import lombok.RequiredArgsConstructor;
+import com.example.Auth.global.config.redis.RefreshToken;
+import com.example.Auth.global.config.redis.RefreshTokenRepository;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
-import java.util.Base64;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
 
-@Component
+@Service("jwtTokenProvider")
 @Log4j2
 public class JwtTokenProvider {
     private static String jwtSecretKey;
     private static int accessTokenExpirationTime;
     private static int refreshTokenExpirationTime;
-    private static RedisTemplate<String, String> redisTemplate;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     public JwtTokenProvider(
             @Value("${jwt.secret}") String jwtSecretKey,
             @Value("${jwt.token.access-expiration-time}") int accessTokenExpirationTime,
             @Value("${jwt.token.refresh-expiration-time}") int refreshTokenExpirationTime,
-            RedisTemplate<String, String> redisTemplate
+            RefreshTokenRepository refreshTokenRepository
     ) {
         this.jwtSecretKey = jwtSecretKey;
         this.accessTokenExpirationTime = accessTokenExpirationTime;
         this.refreshTokenExpirationTime = refreshTokenExpirationTime;
-        this.redisTemplate = redisTemplate;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     /**
      * 헤더로부터 토큰을 추출하는 메서드
      * @param header : 메시지 헤더
      */
-    public static void resolveToken(String header) {
+    public void resolveToken(String header) {
         if (header == null || !header.startsWith("Bearer "))
             throw new RuntimeException("JWT Token is missing");
 
         String token = getTokenFromHeader(header);
         if (!isValidToken(token))
             throw new RuntimeException("JWT Token is invalid");
+
+        if (isTokenExpired(token)) {
+            refreshTokenRepository.findById(getUserIdFromToken(token)).ifPresentOrElse(
+                    refreshToken -> {
+                        if (isValidToken(refreshToken.getToken())) {
+                            generateAccessToken(
+                                    UserAuthenticateDto.of(
+                                            refreshToken.getUserId(),
+                                            refreshToken.getGithubId()
+                                    )
+                            );
+                        }
+                    },
+                    () -> {
+                        throw new RuntimeException("Refresh Token is invalid");
+                    }
+            );
+        }
 
         Long userId = getUserIdFromToken(token);
         if (userId == null)
@@ -67,7 +85,8 @@ public class JwtTokenProvider {
      * @param dto UserDto : 사용자 정보
      * @return String : 토큰
      */
-    public static String generateAccessToken(UserAuthenticateDto dto) {
+    public String generateAccessToken(UserAuthenticateDto dto) {
+        log.info("generateAccessToken : {}", dto);
         return Jwts.builder()
                 .setHeader(createHeader())
                 .setClaims(createClaims(dto))
@@ -81,24 +100,26 @@ public class JwtTokenProvider {
      * @param dto UserDto : 사용자 정보
      * @return String : 토큰
      */
-    public static String generateRefreshToken(UserAuthenticateDto dto) {
+    public String generateRefreshToken(UserAuthenticateDto dto) {
+        log.info("generateRefreshToken : {}", dto);
         String token = Jwts.builder()
                 .setHeader(createHeader())
                 .setClaims(createClaims(dto))
                 .signWith(SignatureAlgorithm.HS256, createSignature())
                 .setExpiration(createExpireDate(refreshTokenExpirationTime))
                 .compact();
+        log.info("generateRefreshToken : {}", token);
+        RefreshToken refreshToken = RefreshToken.of(dto.getId(), token, dto.getGithubId());
+        refreshTokenRepository.save(refreshToken, refreshTokenExpirationTime);
 
-        redisTemplate.opsForValue().set(
-                dto.getId().toString(),
-                token,
-                refreshTokenExpirationTime,
-                TimeUnit.HOURS
-        );
         return token;
     }
 
-    private static boolean isValidToken(String token) {
+    private boolean isTokenExpired(String token) {
+        return getClaimsFormToken(token).getExpiration().before(new Date());
+    }
+
+    private boolean isValidToken(String token) {
         try {
             Claims claims = getClaimsFormToken(token);
 
@@ -107,9 +128,6 @@ public class JwtTokenProvider {
             log.info("userName: {}", claims.get("userName", String.class));
 
             return true;
-        } catch (ExpiredJwtException e) {
-            log.error("Token Expired");
-            return false;
         } catch (JwtException e) {
             log.error("error message: {}", e.getMessage());
             log.error("Token Tampered");
@@ -127,8 +145,8 @@ public class JwtTokenProvider {
     }
 
     private static Map<String, Object> createClaims(UserAuthenticateDto dto) {
-        return Map.of("userId", dto.getId()
-                     ,"userName", dto.getName());
+        return Map.of("userId", dto.getId(),
+                     "githubId", dto.getGithubId());
     }
 
     private static Key createSignature() {
