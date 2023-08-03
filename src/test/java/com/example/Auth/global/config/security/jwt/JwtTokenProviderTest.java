@@ -3,7 +3,6 @@ package com.example.Auth.global.config.security.jwt;
 import com.example.Auth.domain.user.dto.UserAuthenticateDto;
 import com.example.Auth.global.config.redis.RefreshToken;
 import com.example.Auth.global.config.redis.RefreshTokenRepository;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,12 +19,11 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
 class JwtTokenProviderTest {
-    private JwtTokenProvider jwtTokenProvider;
+    private JwtTokenProvider JwtTokenProvider;
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
     private UserAuthenticateDto dto;
@@ -33,14 +31,14 @@ class JwtTokenProviderTest {
 
     @BeforeEach
     public void setUp() {
-        jwtTokenProvider = new JwtTokenProvider(jwtSecretKey, 1, 1, refreshTokenRepository);
+        JwtTokenProvider = new JwtTokenProviderImpl(jwtSecretKey, 1, 1, refreshTokenRepository);
         dto = createDto();
     }
 
     @Test
     public void testGenerateAccessToken() {
         // when
-        String accessToken = jwtTokenProvider.generateAccessToken(dto);
+        String accessToken = JwtTokenProvider.generateAccessToken(dto);
 
         // then
         System.out.println("accessToken : " + accessToken);
@@ -50,7 +48,7 @@ class JwtTokenProviderTest {
     @Test
     public void testGenerateRefreshToken() {
         // when
-        String refreshToken = jwtTokenProvider.generateRefreshToken(dto);
+        String refreshToken = JwtTokenProvider.generateRefreshToken(dto);
 
         // then
         System.out.println("refreshToken : " + refreshToken);
@@ -63,24 +61,24 @@ class JwtTokenProviderTest {
         String header = "Bearer " + createExpiredToken(dto);
 
         // when
-        assertThrows(RuntimeException.class, () -> jwtTokenProvider.resolveToken(header));
+        assertThrows(RuntimeException.class, () -> JwtTokenProvider.resolveToken(header));
     }
 
     @Test
     public void testAccessTokenExpiredAndRefreshTokenValid() {
         // given
-        String expiredAccessToken = jwtTokenProvider.generateAccessToken(dto);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(dto);
+        String expiredAccessToken = JwtTokenProvider.generateAccessToken(dto);
+        String refreshToken = JwtTokenProvider.generateRefreshToken(dto);
         String header = "Bearer " + expiredAccessToken;
 
-        ReflectionTestUtils.setField(jwtTokenProvider, "accessTokenExpirationTime", -1);
+        ReflectionTestUtils.setField(JwtTokenProvider, "accessTokenExpirationTime", -1);
 
         given(refreshTokenRepository.findById(anyLong())).willReturn(
                 Optional.of(RefreshToken.of(dto.getId(), refreshToken, dto.getGithubId()))
         );
 
         // when
-        jwtTokenProvider.resolveToken(header);
+        JwtTokenProvider.resolveToken(header);
 
         // then
 //        refreshTokenRepository.findById(dto.getId())
@@ -95,7 +93,7 @@ class JwtTokenProviderTest {
 //        given(refreshTokenRepository.findById(anyString())).willReturn(Optional.empty());
 
         // when & then
-        assertThrows(RuntimeException.class, () -> jwtTokenProvider.resolveToken(header));
+        assertThrows(RuntimeException.class, () -> JwtTokenProvider.resolveToken(header));
     }
 
     private UserAuthenticateDto createDto() {
