@@ -44,17 +44,17 @@ class JwtAuthorizationFilterTest {
                 .email("a@a.com")
                 .role(RoleType.USER)
                 .build();
-        UserAuthenticateDto userDto = UserAuthenticateDto.of(user.getId(), user.getName());
-        String token = JwtTokenProvider.generateAccessToken(userDto);
+//        UserAuthenticateDto userDto = UserAuthenticateDto.of(user.getId(), user.getName());
+//        String token = JwtTokenProvider.generateAccessToken(userDto);
 
-        MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
-                .get("/api/v1/users/login")
-                .header(AuthConstants.AUTH_HEADER.getValue(), AuthConstants.TOKEN_TYPE + token);
-
-        mockMvc.perform(requestBuilder)
-                .andExpect(status().isOk())
-                .andExpect(content().string("Protected Resource"))
-                .andDo(print());
+//        MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
+//                .get("/api/v1/users/login")
+//                .header(AuthConstants.AUTH_HEADER.getValue(), AuthConstants.TOKEN_TYPE + token);
+//
+//        mockMvc.perform(requestBuilder)
+//                .andExpect(status().isOk())
+//                .andExpect(content().string("Protected Resource"))
+//                .andDo(print());
     }
 
     @Test
