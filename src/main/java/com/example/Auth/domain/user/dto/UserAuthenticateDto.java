@@ -1,26 +1,24 @@
 package com.example.Auth.domain.user.dto;
 
+import com.example.Auth.domain.user.domain.RoleType;
 import lombok.Getter;
 
 @Getter
 public class UserAuthenticateDto {
     private Long id;
-    private Integer githubId;
 
-    private UserAuthenticateDto(Long id, Integer githubId) {
+    private UserAuthenticateDto(Long id) {
         this.id = id;
-        this.githubId = githubId;
     }
 
-    public static UserAuthenticateDto of(Long id, Integer githubId) {
-        return new UserAuthenticateDto(id, githubId);
+    public static UserAuthenticateDto of(Long id) {
+        return new UserAuthenticateDto(id);
     }
 
     @Override public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("UserAuthenticateDto(");
         sb.append("id=").append(id);
-        sb.append(", githubId=").append(githubId);
         sb.append(")");
         return sb.toString();
     }

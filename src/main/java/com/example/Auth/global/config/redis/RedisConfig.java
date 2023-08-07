@@ -20,9 +20,10 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<Long, Object> redisTemplate() {
-        RedisTemplate<Long, Object> redisTemplate = new RedisTemplate<>();
+    public RedisTemplate<Long, String> redisTemplate() {
+        RedisTemplate<Long, String> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory());
+        redisTemplate.setValueSerializer(new StringRedisSerializer());
 
         return redisTemplate;
     }

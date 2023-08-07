@@ -1,7 +1,6 @@
 package com.example.Auth.global.config.security.jwt;
 
 import com.example.Auth.domain.user.dto.UserAuthenticateDto;
-import com.example.Auth.global.config.redis.RefreshToken;
 import com.example.Auth.global.config.redis.RefreshTokenRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -14,12 +13,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
-import java.util.*;
+import java.util.Base64;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
 class JwtTokenProviderTest {
@@ -73,9 +73,9 @@ class JwtTokenProviderTest {
 
         ReflectionTestUtils.setField(JwtTokenProvider, "accessTokenExpirationTime", -1);
 
-        given(refreshTokenRepository.findById(anyLong())).willReturn(
-                Optional.of(RefreshToken.of(dto.getId(), refreshToken, dto.getGithubId()))
-        );
+//        given(refreshTokenRepository.findById(anyLong())).willReturn(
+//                Optional.of(RefreshToken.of(dto.getId(), refreshToken, dto.getGithubId()))
+//        );
 
         // when
         JwtTokenProvider.resolveToken(header);
@@ -97,7 +97,7 @@ class JwtTokenProviderTest {
     }
 
     private UserAuthenticateDto createDto() {
-        return UserAuthenticateDto.of(1L, 1);
+        return UserAuthenticateDto.of(1L);
     }
 
     private String createExpiredToken(UserAuthenticateDto dto) {
@@ -118,8 +118,7 @@ class JwtTokenProviderTest {
     }
 
     private static Map<String, Object> createClaims(UserAuthenticateDto dto) {
-        return Map.of("userId", dto.getId(),
-                "githubId", dto.getGithubId());
+        return Map.of("userId", dto.getId());
     }
 
     private static Key createSignature() {

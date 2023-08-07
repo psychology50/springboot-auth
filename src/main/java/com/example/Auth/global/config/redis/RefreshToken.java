@@ -1,5 +1,6 @@
 package com.example.Auth.global.config.redis;
 
+import com.example.Auth.domain.user.domain.RoleType;
 import jakarta.persistence.Id;
 import org.springframework.data.redis.core.RedisHash;
 
@@ -8,16 +9,14 @@ public class RefreshToken {
     @Id
     private final Long userId;
     private final String token;
-    private final Integer githubId;
 
-    private RefreshToken(Long userId, String token, Integer githubId) {
+    private RefreshToken(Long userId, String token) {
         this.userId = userId;
         this.token = token;
-        this.githubId = githubId;
     }
 
-    public static RefreshToken of(Long userId, String refreshToken, Integer githubId) {
-        return new RefreshToken(userId, refreshToken, githubId);
+    public static RefreshToken of(Long userId, String refreshToken) {
+        return new RefreshToken(userId, refreshToken);
     }
 
     public Long getUserId() {
@@ -26,8 +25,5 @@ public class RefreshToken {
 
     public String getToken() {
         return token;
-    }
-    public Integer getGithubId() {
-        return githubId;
     }
 }

@@ -13,7 +13,10 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
-import java.util.*;
+import java.util.Base64;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Map;
 
 @Component
 @Log4j2
@@ -46,20 +49,12 @@ public class JwtTokenProviderImpl implements JwtTokenProvider {
             throw new RuntimeException("JWT Token is invalid");
 
         if (isTokenExpired(token))
-            refreshTokenIfNeeded(token);
+            refreshTokenIfNeeded(getUserIdFromToken(token));
 
         Long userId = getUserIdFromToken(token);
         if (userId == null)
             throw new RuntimeException("userId is null or blank");
     }
-    
-//    public Authentication getAuthentication(String token) {
-//        Claims claims = getClaimsFormToken(token);
-//        String userName = claims.getSubject();
-//        UserDetails userDetails = userDetailsService.loadUserByUsername(userName);
-//
-//        return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
-//    }
 
     /**
      * 사용자 정보 기반으로 액세스 토큰을 생성하는 메서드
@@ -90,7 +85,7 @@ public class JwtTokenProviderImpl implements JwtTokenProvider {
                 .setExpiration(createExpireDate(refreshTokenExpirationTime))
                 .compact();
         log.info("generateRefreshToken : {}", token);
-        RefreshToken refreshToken = RefreshToken.of(dto.getId(), token, dto.getGithubId());
+        RefreshToken refreshToken = RefreshToken.of(dto.getId(), token);
         refreshTokenRepository.save(refreshToken, refreshTokenExpirationTime);
 
         return token;
@@ -115,13 +110,16 @@ public class JwtTokenProviderImpl implements JwtTokenProvider {
         }
     }
 
-    private void refreshTokenIfNeeded(String token) {
-        refreshTokenRepository.findById(getUserIdFromToken(token)).ifPresentOrElse(
+    // TODO: generateAccessToken이 return하는 token을 받아와야 함
+    private void refreshTokenIfNeeded(Long userId) {
+        refreshTokenRepository.findById(userId).ifPresentOrElse(
                 refreshToken -> {
-                    if (isValidToken(refreshToken.getToken())) {
+                    if (isTokenExpired(refreshToken.getToken())) {
                         generateAccessToken(
-                                UserAuthenticateDto.of(refreshToken.getUserId(), refreshToken.getGithubId())
+                                UserAuthenticateDto.of(refreshToken.getUserId())
                         );
+                    } else {
+                        throw new RuntimeException("Refresh Token is expired");
                     }
                 },
                 () -> {
@@ -141,8 +139,7 @@ public class JwtTokenProviderImpl implements JwtTokenProvider {
     }
 
     private static Map<String, Object> createClaims(UserAuthenticateDto dto) {
-        return Map.of("userId", dto.getId(),
-                     "githubId", dto.getGithubId());
+        return Map.of("userId", dto.getId());
     }
 
     private static Key createSignature() {
