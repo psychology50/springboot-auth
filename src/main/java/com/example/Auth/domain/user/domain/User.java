@@ -1,27 +1,26 @@
 package com.example.Auth.domain.user.domain;
 
+import com.example.Auth.domain.model.Auditable;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name="USER")
 @Getter
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor
-public class User extends Auditable{
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@ToString(of = {"id", "name", "email", "role"})
+public class User extends Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", nullable = false)
-    private String name;
-
     @Column(name = "github_id", nullable = false)
     private Integer githubId;
+
+    @Column(name = "name", nullable = false)
+    private String name;
 
     @Column(name = "bio")
     private String bio;
@@ -32,6 +31,7 @@ public class User extends Auditable{
     @Column(name = "email")
     private String email;
 
+    @Convert(converter = RoleTypeConverter.class)
     @Column(name = "role", nullable = false)
     private RoleType role;
 }

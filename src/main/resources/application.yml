@@ -4,6 +4,14 @@ spring:
     username: ${DB_USER_NAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      maximum-pool-size: 1 # (default 10)
+      minimum-idle: 1 # (default 10)
+      idle-timeout: 60000 # 1m (default 10m)
+      max-lifetime: 1200000 # 20m (default 30m)
+      connection-timeout: 3000 # 3s (default 30s)
+      validation-timeout: 2000 # 2s (default 5s)
 
   jpa:
     database: MySQL
@@ -24,7 +32,8 @@ logging:
     org.hibernate.type: trace
 
 jwt:
-  secret: exampleSecretKeyForSpringBootProjectAtSubRepository
+  secret: exampleSecretKeyForSpringBootProjectAtSubRepository # TODO 운영 환경에서 수정
   token:
-    access-expiration-time: 7
-    refresh-expiration-time: 168
+    # milliseconds 단위
+    access-expiration-time: 1800000 # 30m (30 * 60 * 1000)
+    refresh-expiration-time: 604800000 # 7d (7 * 24 * 60 * 60 * 1000)
