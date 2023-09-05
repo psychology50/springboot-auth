@@ -4,6 +4,7 @@ Spring Security, OAuth2, JWT 등 계정 관리를 위한 커스텀 기능 테스
 ## 추가할 기능
 - OAuth2를 연동한 인가 과정
 - Spring Security @PreAuthorize 권한 관리
+- 각 기능별 테스트 케이스 작성
 
 ## 작업 사항
 
