@@ -1,4 +1,4 @@
-package com.example.Auth.global.common.utils.converter.converter;
+package com.example.Auth.global.common.utils.converter;
 
 public interface LegacyCommonType {
     /**

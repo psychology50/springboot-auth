@@ -1,6 +1,6 @@
 package com.example.Auth.domain.user.domain;
 
-import com.example.Auth.global.common.utils.converter.converter.AbstractLegacyEnumAttributeConverter;
+import com.example.Auth.global.common.utils.converter.AbstractLegacyEnumAttributeConverter;
 import jakarta.persistence.Convert;
 
 @Convert

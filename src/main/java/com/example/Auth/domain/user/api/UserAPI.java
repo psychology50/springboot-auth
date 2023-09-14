@@ -4,7 +4,7 @@ import com.example.Auth.domain.user.dto.UserAuthReq;
 import com.example.Auth.domain.user.service.UserAuthService;
 import com.example.Auth.global.common.jwt.entity.JwtUserInfo;
 import com.example.Auth.global.common.security.CustomUserDetails;
-import com.example.Auth.global.cookie.CookieUtil;
+import com.example.Auth.global.common.cookie.CookieUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

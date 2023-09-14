@@ -1,4 +1,4 @@
-package com.example.Auth.global.common.utils.converter.converter;
+package com.example.Auth.global.common.utils.converter;
 
 import jakarta.persistence.AttributeConverter;
 import lombok.Getter;

@@ -1,6 +1,6 @@
 package com.example.Auth.domain.user.domain;
 
-import com.example.Auth.global.common.utils.converter.converter.LegacyCommonType;
+import com.example.Auth.global.common.utils.converter.LegacyCommonType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.RequiredArgsConstructor;

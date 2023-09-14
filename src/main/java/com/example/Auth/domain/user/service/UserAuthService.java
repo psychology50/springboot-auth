@@ -31,6 +31,8 @@ public class UserAuthService {
 
     public Map<String, String> login(UserAuthReq dto) {
         User user = userSearchService.findById(dto.getId());
+        // TODO: add user password validation check
+
         JwtUserInfo jwtUserInfo = JwtUserInfo.from(user);
 
         String accessToken = jwtTokenProvider.generateAccessToken(jwtUserInfo);

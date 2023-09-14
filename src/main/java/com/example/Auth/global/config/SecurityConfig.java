@@ -6,7 +6,7 @@ import com.example.Auth.global.common.jwt.util.JwtTokenProvider;
 import com.example.Auth.global.common.redis.forbidden.ForbiddenTokenService;
 import com.example.Auth.global.common.redis.refresh.RefreshTokenService;
 import com.example.Auth.global.common.security.UserDetailServiceImpl;
-import com.example.Auth.global.cookie.CookieUtil;
+import com.example.Auth.global.common.cookie.CookieUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;

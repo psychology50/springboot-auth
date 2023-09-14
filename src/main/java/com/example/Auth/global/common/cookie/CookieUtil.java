@@ -1,4 +1,4 @@
-package com.example.Auth.global.cookie;
+package com.example.Auth.global.common.cookie;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
